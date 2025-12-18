@@ -1,0 +1,13 @@
+{
+  "platformName": "Android",
+  "appium:automationName": "UiAutomator2",
+  "appium:deviceName": "emulator-5554",
+  "appium:app": "./london-unlocked-tests/apps/android/app-debug.apk",
+  "appium:noReset": false,
+  "appium:fullReset": false,
+  "appium:ensureWebviewsHavePages": true,
+  "appium:nativeWebScreenshot": true,
+  "appium:newCommandTimeout": 3600,
+  "appium:connectHardwareKeyboard": true
+}
+

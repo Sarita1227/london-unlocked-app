@@ -1,0 +1,306 @@
+name: 🔀 Pull Request Validation
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+    branches:
+      - main
+      - develop
+
+jobs:
+  pr-validation:
+    name: 🔍 PR Validation
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: 📝 Check PR title
+        run: |
+          PR_TITLE="${{ github.event.pull_request.title }}"
+          echo "PR Title: $PR_TITLE"
+          
+          if echo "$PR_TITLE" | grep -qE "^(feat|fix|docs|style|refactor|test|chore|perf|ci|build)(\(.+\))?: .{10,}"; then
+            echo "✅ PR title follows conventional commits format"
+          else
+            echo "❌ PR title must follow conventional commits format"
+            echo ""
+            echo "Format: <type>(optional scope): <description>"
+            echo ""
+            echo "Valid types: feat, fix, docs, style, refactor, test, chore, perf, ci, build"
+            echo ""
+            echo "Examples:"
+            echo "  feat: add login validation"
+            echo "  fix(auth): resolve token expiration"
+            echo "  test: add guest user journey tests"
+            exit 1
+          fi
+
+      - name: 📋 Check PR description
+        run: |
+          PR_BODY="${{ github.event.pull_request.body }}"
+          
+          if [ -z "$PR_BODY" ]; then
+            echo "⚠️  PR has no description. Consider adding:"
+            echo "  - What changes were made"
+            echo "  - Why these changes were made"
+            echo "  - How to test the changes"
+          else
+            echo "✅ PR has description"
+          fi
+
+      - name: 🏷️ Check PR labels
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { data: labels } = await github.rest.issues.listLabelsOnIssue({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number
+            });
+            
+            console.log('PR Labels:', labels.map(l => l.name).join(', '));
+            
+            const hasLabel = labels.length > 0;
+            if (!hasLabel) {
+              console.log('⚠️  No labels applied. Consider adding labels like:');
+              console.log('  - enhancement, bug, documentation, tests, etc.');
+            } else {
+              console.log('✅ PR has labels');
+            }
+
+      - name: 📊 Analyze changes
+        run: |
+          echo "## 📊 Change Analysis" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          # Files changed
+          FILES_CHANGED=$(git diff --name-only ${{ github.event.pull_request.base.sha }} ${{ github.event.pull_request.head.sha }} | wc -l)
+          echo "**Files Changed:** $FILES_CHANGED" >> $GITHUB_STEP_SUMMARY
+          
+          # Lines added/deleted
+          LINES_ADDED=$(git diff --shortstat ${{ github.event.pull_request.base.sha }} ${{ github.event.pull_request.head.sha }} | grep -oE "[0-9]+ insertion" | grep -oE "[0-9]+" || echo "0")
+          LINES_DELETED=$(git diff --shortstat ${{ github.event.pull_request.base.sha }} ${{ github.event.pull_request.head.sha }} | grep -oE "[0-9]+ deletion" | grep -oE "[0-9]+" || echo "0")
+          echo "**Lines Added:** $LINES_ADDED" >> $GITHUB_STEP_SUMMARY
+          echo "**Lines Deleted:** $LINES_DELETED" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          # File types changed
+          echo "### File Types Changed:" >> $GITHUB_STEP_SUMMARY
+          git diff --name-only ${{ github.event.pull_request.base.sha }} ${{ github.event.pull_request.head.sha }} | awk -F. '{if (NF>1) {print $NF}}' | sort | uniq -c | sort -rn >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          # Warn if large PR
+          if [ $FILES_CHANGED -gt 30 ]; then
+            echo "⚠️  **Warning:** Large PR with $FILES_CHANGED files changed" >> $GITHUB_STEP_SUMMARY
+            echo "Consider splitting into smaller PRs for easier review" >> $GITHUB_STEP_SUMMARY
+          fi
+
+      - name: 🧪 Check test coverage
+        run: |
+          # Check if test files were added/modified
+          TEST_FILES=$(git diff --name-only ${{ github.event.pull_request.base.sha }} ${{ github.event.pull_request.head.sha }} | grep -E "\.test\.(ts|tsx|js|jsx)$" || echo "")
+          SRC_FILES=$(git diff --name-only ${{ github.event.pull_request.base.sha }} ${{ github.event.pull_request.head.sha }} | grep -E "src/.*\.(ts|tsx|js|jsx)$" | grep -v ".test." || echo "")
+          
+          if [ -n "$SRC_FILES" ] && [ -z "$TEST_FILES" ]; then
+            echo "⚠️  Source files changed but no test files added/modified" >> $GITHUB_STEP_SUMMARY
+            echo "Consider adding tests for new/changed functionality" >> $GITHUB_STEP_SUMMARY
+          fi
+
+      - name: 🔍 Check for TODO/FIXME
+        run: |
+          TODOS=$(git diff ${{ github.event.pull_request.base.sha }} ${{ github.event.pull_request.head.sha }} | grep -E "^\+.*TODO|^\+.*FIXME" || echo "")
+          
+          if [ -n "$TODOS" ]; then
+            echo "⚠️  New TODO/FIXME comments found:" >> $GITHUB_STEP_SUMMARY
+            echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+            echo "$TODOS" >> $GITHUB_STEP_SUMMARY
+            echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+          fi
+
+      - name: 🔍 Check for console.log
+        run: |
+          CONSOLE_LOGS=$(git diff ${{ github.event.pull_request.base.sha }} ${{ github.event.pull_request.head.sha }} | grep -E "^\+.*console\.(log|debug|info|warn|error)" | grep -v "// " || echo "")
+          
+          if [ -n "$CONSOLE_LOGS" ]; then
+            echo "⚠️  New console.log statements found:" >> $GITHUB_STEP_SUMMARY
+            echo "Consider using proper logging library instead" >> $GITHUB_STEP_SUMMARY
+          fi
+
+  required-checks:
+    name: ✅ Required Checks
+    runs-on: ubuntu-latest
+    needs: pr-validation
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 📦 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: 📦 Install test dependencies
+        working-directory: london-unlocked-tests
+        run: npm ci
+
+      - name: 🔍 ESLint
+        working-directory: london-unlocked-tests
+        run: npm run lint
+        continue-on-error: false
+
+      - name: 🔍 TypeScript
+        working-directory: london-unlocked-tests
+        run: npx tsc --noEmit
+        continue-on-error: false
+
+      - name: ✅ All checks passed
+        run: echo "✅ All required checks passed"
+
+  auto-label:
+    name: 🏷️ Auto Label
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: 🏷️ Add labels based on files changed
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const changedFiles = await github.rest.pulls.listFiles({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: context.issue.number
+            });
+            
+            const files = changedFiles.data.map(f => f.filename);
+            const labels = [];
+            
+            // Check file patterns
+            if (files.some(f => f.includes('london-unlocked-tests/'))) {
+              labels.push('tests');
+            }
+            if (files.some(f => f.includes('london-unlocked/src/'))) {
+              labels.push('app');
+            }
+            if (files.some(f => f.endsWith('.md'))) {
+              labels.push('documentation');
+            }
+            if (files.some(f => f.includes('.github/workflows/'))) {
+              labels.push('ci/cd');
+            }
+            if (files.some(f => f.includes('package.json'))) {
+              labels.push('dependencies');
+            }
+            
+            // Add size labels
+            const totalChanges = changedFiles.data.reduce((sum, f) => sum + f.changes, 0);
+            if (totalChanges < 10) {
+              labels.push('size/XS');
+            } else if (totalChanges < 50) {
+              labels.push('size/S');
+            } else if (totalChanges < 200) {
+              labels.push('size/M');
+            } else if (totalChanges < 500) {
+              labels.push('size/L');
+            } else {
+              labels.push('size/XL');
+            }
+            
+            // Add labels
+            if (labels.length > 0) {
+              await github.rest.issues.addLabels({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                labels: labels
+              });
+              console.log('Added labels:', labels.join(', '));
+            }
+
+  comment-summary:
+    name: 💬 Comment Summary
+    runs-on: ubuntu-latest
+    needs: [pr-validation, required-checks]
+    if: always()
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: 💬 Add PR comment
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number
+            });
+            
+            const botComment = comments.find(comment => 
+              comment.user.type === 'Bot' && 
+              comment.body.includes('🤖 PR Validation Summary')
+            );
+            
+            const filesChanged = await github.rest.pulls.listFiles({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: context.issue.number
+            });
+            
+            const totalFiles = filesChanged.data.length;
+            const totalChanges = filesChanged.data.reduce((sum, f) => sum + f.changes, 0);
+            
+            const validationStatus = '${{ needs.pr-validation.result }}';
+            const checksStatus = '${{ needs.required-checks.result }}';
+            
+            const statusIcon = (status) => {
+              if (status === 'success') return '✅';
+              if (status === 'failure') return '❌';
+              return '⚠️';
+            };
+            
+            const commentBody = `## 🤖 PR Validation Summary
+
+**Status:** ${statusIcon(validationStatus)} Validation: ${validationStatus} | ${statusIcon(checksStatus)} Required Checks: ${checksStatus}
+
+### 📊 Changes
+- **Files Changed:** ${totalFiles}
+- **Total Changes:** ${totalChanges} lines
+
+### ✅ Checks
+- ${statusIcon(validationStatus)} PR Title Format
+- ${statusIcon(validationStatus)} PR Description
+- ${statusIcon(checksStatus)} ESLint
+- ${statusIcon(checksStatus)} TypeScript Compilation
+
+---
+*This comment is automatically updated on each commit*`;
+            
+            if (botComment) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: botComment.id,
+                body: commentBody
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body: commentBody
+              });
+            }
+

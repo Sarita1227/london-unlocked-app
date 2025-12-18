@@ -1,0 +1,103 @@
+# Learn more https://docs.github.com/en/get-started/getting-started-with-git/ignoring-files
+
+# Dependencies
+node_modules/
+.npm
+.yarn/cache
+.yarn/unplugged
+.yarn/build-state.yml
+.yarn/install-state.gz
+.pnp.*
+
+# Expo
+.expo/
+.expo-shared/
+dist/
+web-build/
+expo-env.d.ts
+
+# Native
+.kotlin/
+*.orig.*
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
+*.ipa
+*.apk
+*.aab
+
+# Metro
+.metro-health-check*
+
+# Debug & Logs
+npm-debug.*
+yarn-debug.*
+yarn-error.*
+*.log
+logs/
+
+# macOS
+.DS_Store
+*.pem
+.AppleDouble
+.LSOverride
+
+# Windows
+Thumbs.db
+Desktop.ini
+
+# Linux
+*~
+
+# IDEs and Editors
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.project
+.classpath
+.settings/
+*.sublime-project
+*.sublime-workspace
+
+# Environment & Config
+.env
+.env*.local
+.env.development
+.env.production
+
+# TypeScript
+*.tsbuildinfo
+*.tsbuildinfo.*
+
+# Generated Native Folders
+/ios
+/android
+
+# Test Coverage
+coverage/
+.nyc_output/
+
+# Temporary Files
+*.tmp
+*.temp
+.cache/
+
+# Build artifacts
+build/
+dist/
+*.js.map
+
+# Lock files (optional - remove if you want to commit them)
+# package-lock.json
+# yarn.lock
+
+# Temporary documentation (cleanup before commit)
+PROJECT_CLEANUP_SUMMARY.md
+CLEANUP_CHECKLIST.md
+COMMIT_MESSAGE.md
+READY_FOR_COMMIT.md
+QUICK_REFERENCE.md

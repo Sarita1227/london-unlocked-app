@@ -1,0 +1,240 @@
+name: 🔍 Code Quality & Commit Rules
+
+on:
+  push:
+    branches:
+      - '**'
+  pull_request:
+    branches:
+      - main
+      - develop
+
+jobs:
+  commit-lint:
+    name: 📝 Commit Message Validation
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push'
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: 📦 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: 📝 Validate commit messages
+        run: |
+          echo "Checking commit messages..."
+          
+          # Get the latest commit message
+          COMMIT_MSG=$(git log -1 --pretty=%B)
+          echo "Commit message: $COMMIT_MSG"
+          
+          # Check if commit follows conventional commits format
+          if echo "$COMMIT_MSG" | grep -qE "^(feat|fix|docs|style|refactor|test|chore|perf|ci|build|revert)(\(.+\))?: .{3,}"; then
+            echo "✅ Commit message follows conventional commits format"
+          else
+            echo "❌ Commit message does NOT follow conventional commits format"
+            echo ""
+            echo "Expected format: <type>(optional scope): <description>"
+            echo ""
+            echo "Valid types:"
+            echo "  - feat:     New feature"
+            echo "  - fix:      Bug fix"
+            echo "  - docs:     Documentation changes"
+            echo "  - style:    Code style changes (formatting, etc.)"
+            echo "  - refactor: Code refactoring"
+            echo "  - test:     Test changes"
+            echo "  - chore:    Build/tooling changes"
+            echo "  - perf:     Performance improvements"
+            echo "  - ci:       CI/CD changes"
+            echo "  - build:    Build system changes"
+            echo "  - revert:   Revert previous commit"
+            echo ""
+            echo "Examples:"
+            echo "  feat: add login validation"
+            echo "  fix(auth): resolve token expiration issue"
+            echo "  test: add guest user journey tests"
+            echo "  docs: update README with setup instructions"
+            exit 1
+          fi
+
+  code-quality:
+    name: 🔍 Code Quality
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        project: ['london-unlocked-tests']
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 📦 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: ${{ matrix.project }}/package-lock.json
+
+      - name: 📦 Install dependencies
+        working-directory: ${{ matrix.project }}
+        run: npm ci
+
+      - name: 🔍 Run ESLint
+        working-directory: ${{ matrix.project }}
+        run: npm run lint
+        continue-on-error: true
+
+      - name: 🔍 TypeScript check
+        working-directory: ${{ matrix.project }}
+        run: npx tsc --noEmit
+
+      - name: 📊 Code complexity analysis
+        working-directory: ${{ matrix.project }}
+        run: |
+          npx complexity-report src/ --format json > complexity-report.json || true
+        continue-on-error: true
+
+  security-scan:
+    name: 🔒 Security Scan
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🔒 Run npm audit (App)
+        working-directory: london-unlocked
+        run: |
+          npm audit --audit-level=moderate || echo "⚠️  Vulnerabilities found in app dependencies"
+        continue-on-error: true
+
+      - name: 🔒 Run npm audit (Tests)
+        working-directory: london-unlocked-tests
+        run: |
+          npm audit --audit-level=moderate || echo "⚠️  Vulnerabilities found in test dependencies"
+        continue-on-error: true
+
+      - name: 🔍 Secret scanning
+        uses: trufflesecurity/trufflehog@main
+        with:
+          path: ./
+          base: ${{ github.event.repository.default_branch }}
+          head: HEAD
+        continue-on-error: true
+
+  branch-protection:
+    name: 🛡️ Branch Protection Rules
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: 🔍 Check PR title
+        run: |
+          PR_TITLE="${{ github.event.pull_request.title }}"
+          echo "PR Title: $PR_TITLE"
+          
+          if echo "$PR_TITLE" | grep -qE "^(feat|fix|docs|style|refactor|test|chore|perf|ci|build)(\(.+\))?: .{3,}"; then
+            echo "✅ PR title follows conventional commits format"
+          else
+            echo "⚠️  PR title should follow conventional commits format"
+            echo "Expected: <type>(optional scope): <description>"
+          fi
+
+      - name: 📊 Check file changes
+        run: |
+          echo "Changed files:"
+          git diff --name-only ${{ github.event.pull_request.base.sha }} ${{ github.event.pull_request.head.sha }}
+          
+          # Count changed files
+          CHANGED_FILES=$(git diff --name-only ${{ github.event.pull_request.base.sha }} ${{ github.event.pull_request.head.sha }} | wc -l)
+          echo "Total changed files: $CHANGED_FILES"
+          
+          if [ $CHANGED_FILES -gt 50 ]; then
+            echo "⚠️  Warning: Large number of files changed ($CHANGED_FILES). Consider splitting into smaller PRs."
+          fi
+
+      - name: 📝 Check for test files
+        run: |
+          CHANGED_TEST_FILES=$(git diff --name-only ${{ github.event.pull_request.base.sha }} ${{ github.event.pull_request.head.sha }} | grep -E "\.test\.(ts|tsx|js|jsx)$" | wc -l)
+          CHANGED_SRC_FILES=$(git diff --name-only ${{ github.event.pull_request.base.sha }} ${{ github.event.pull_request.head.sha }} | grep -E "src/.*\.(ts|tsx|js|jsx)$" | grep -v ".test." | wc -l)
+          
+          echo "Changed source files: $CHANGED_SRC_FILES"
+          echo "Changed test files: $CHANGED_TEST_FILES"
+          
+          if [ $CHANGED_SRC_FILES -gt 0 ] && [ $CHANGED_TEST_FILES -eq 0 ]; then
+            echo "⚠️  Warning: Source files changed but no test files updated. Consider adding tests."
+          fi
+
+  file-size-check:
+    name: 📦 File Size Check
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 📦 Check for large files
+        run: |
+          echo "Checking for large files (>5MB)..."
+          
+          LARGE_FILES=$(find . -type f -size +5M -not -path "*/node_modules/*" -not -path "*/.git/*" -not -path "*/build/*" -not -path "*/android/app/build/*")
+          
+          if [ -n "$LARGE_FILES" ]; then
+            echo "⚠️  Large files found:"
+            echo "$LARGE_FILES"
+            echo ""
+            echo "Consider:"
+            echo "  1. Adding to .gitignore"
+            echo "  2. Using Git LFS for large binary files"
+            echo "  3. Compressing or optimizing the files"
+          else
+            echo "✅ No large files found"
+          fi
+
+      - name: 📦 Check for APK files
+        run: |
+          APK_FILES=$(find . -name "*.apk" -not -path "*/node_modules/*")
+          
+          if [ -n "$APK_FILES" ]; then
+            echo "⚠️  APK files found in repository:"
+            echo "$APK_FILES"
+            echo ""
+            echo "APK files should generally not be committed to Git."
+            echo "Consider using artifacts or releases instead."
+          else
+            echo "✅ No APK files in repository"
+          fi
+
+  summary:
+    name: 📊 Quality Summary
+    runs-on: ubuntu-latest
+    needs: [commit-lint, code-quality, security-scan]
+    if: always()
+
+    steps:
+      - name: 📊 Generate summary
+        run: |
+          echo "## 🔍 Code Quality Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Check | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|-------|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Commit Lint | ${{ needs.commit-lint.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Code Quality | ${{ needs.code-quality.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Security Scan | ${{ needs.security-scan.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Workflow:** ${{ github.workflow }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Triggered by:** ${{ github.actor }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Branch:** ${{ github.ref_name }}" >> $GITHUB_STEP_SUMMARY
+

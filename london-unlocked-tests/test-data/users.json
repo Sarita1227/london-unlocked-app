@@ -1,0 +1,19 @@
+{
+  "validUser": {
+    "email": "test.user@londonunlocked.com",
+    "password": "Test123!"
+  },
+  "invalidUser": {
+    "email": "invalidemailpattern.test.com",
+    "password": "Test123!"
+  },
+  "invalidPassword": {
+    "email": "test.user@londonunlocked.com",
+    "password": "Test"
+  },
+  "blankCreds": {
+    "email": "",
+    "password": ""
+  }
+}
+
