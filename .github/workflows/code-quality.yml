@@ -82,7 +82,7 @@ jobs:
 
       - name: Install dependencies
         working-directory: ${{ matrix.project }}
-        run: npm ci
+        run: npm install
 
       - name: Run ESLint
         working-directory: ${{ matrix.project }}
