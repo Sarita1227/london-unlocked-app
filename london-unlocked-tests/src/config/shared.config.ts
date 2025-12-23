@@ -8,14 +8,6 @@ export const config: Partial<Options.Testrunner> = {
     // Runner type
     runner: 'local',
 
-    // TypeScript auto-compilation
-    autoCompileOpts: {
-        autoCompile: true,
-        tsNodeOpts: {
-            project: './tsconfig.json',
-            transpileOnly: true
-        }
-    },
 
     // Appium Service - Disabled (start manually to avoid port conflicts)
     // Run: appium --address 127.0.0.1 --port 4723 --relaxed-security --allow-insecure adb_shell
