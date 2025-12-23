@@ -13,7 +13,6 @@ jobs:
   commit-lint:
     name: Commit Message Validation
     runs-on: ubuntu-latest
-    if: github.event_name == 'push'
 
     steps:
       - name: Checkout code
@@ -130,7 +129,6 @@ jobs:
   branch-protection:
     name: Branch Protection Rules
     runs-on: ubuntu-latest
-    if: github.event_name == 'pull_request'
 
     steps:
       - name: Checkout code
@@ -139,6 +137,7 @@ jobs:
           fetch-depth: 0
 
       - name: Check PR title
+        if: github.event_name == 'pull_request'
         run: |
           PR_TITLE="${{ github.event.pull_request.title }}"
           echo "PR Title: $PR_TITLE"
@@ -150,7 +149,20 @@ jobs:
             echo "Expected: <type>(optional scope): <description>"
           fi
 
-      - name: 📊 Check file changes
+      - name: Check commit message on push
+        if: github.event_name == 'push'
+        run: |
+          COMMIT_MSG=$(git log -1 --pretty=%B)
+          echo "Commit message: $COMMIT_MSG"
+          
+          if echo "$COMMIT_MSG" | grep -qE "^(feat|fix|docs|style|refactor|test|chore|perf|ci|build)(\(.+\))?: .{3,}"; then
+            echo "✓ Commit follows conventional commits format"
+          else
+            echo "Warning: Consider using conventional commit format"
+          fi
+
+      - name: Check file changes
+        if: github.event_name == 'pull_request'
         run: |
           echo "Changed files:"
           git diff --name-only ${{ github.event.pull_request.base.sha }} ${{ github.event.pull_request.head.sha }}
@@ -163,7 +175,8 @@ jobs:
             echo "⚠️  Warning: Large number of files changed ($CHANGED_FILES). Consider splitting into smaller PRs."
           fi
 
-      - name: 📝 Check for test files
+      - name: Check for test files
+        if: github.event_name == 'pull_request'
         run: |
           CHANGED_TEST_FILES=$(git diff --name-only ${{ github.event.pull_request.base.sha }} ${{ github.event.pull_request.head.sha }} | grep -E "\.test\.(ts|tsx|js|jsx)$" | wc -l)
           CHANGED_SRC_FILES=$(git diff --name-only ${{ github.event.pull_request.base.sha }} ${{ github.event.pull_request.head.sha }} | grep -E "src/.*\.(ts|tsx|js|jsx)$" | grep -v ".test." | wc -l)
