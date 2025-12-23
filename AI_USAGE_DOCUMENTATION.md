@@ -5,11 +5,31 @@ This document details how AI (GitHub Copilot) was used throughout the London Unl
 
 ---
 
+## AI Usage Breakdown
+
+### **React Native App Development: ~85% AI-Assisted** 🤖
+As a **SDET**, not an app developer, I leveraged AI to develop the React Native app:
+- Used AI for complete app scaffolding and structure
+- Generated navigation, authentication, and UI components
+- Focused on having a testable app, not app development expertise
+
+### **Test Automation Framework: ~25% AI-Assisted** 👨‍💻
+As a **SDET**, this is my core expertise area:
+- Designed test framework architecture
+- Implemented Page Object Model with best practices
+- Used AI only for boilerplate and configuration templates
+- All test logic, debugging, and optimization done without AI
+
+---
+
 ## AI Tools Used
 
 **Primary Tool:** GitHub Copilot (Claude Sonnet 4.5)
 **Usage Period:** December 2024
-**Usage Extent:** ~60% AI-assisted, 40% manual coding/review
+
+**Time Breakdown:**
+- **App Development:** 85% AI-assisted
+- **Test Framework:** 25% AI-assisted
 
 ---
 
@@ -88,6 +108,8 @@ I asked AI to help create a React Native application with the following specific
 
 ## How AI Was Used
 
+### Part 1: React Native App Development (85% AI-Assisted) 🤖
+
 ### 1. React Native App Structure & Navigation
 **Usage:** AI helped scaffold the Expo React Native project with proper navigation setup, authentication context, and screen components following best practices.
 
@@ -96,62 +118,143 @@ I asked AI to help create a React Native application with the following specific
 - 🔄 Modified: Customized styling and London-themed assets
 - ✅ Enhanced: Added guest mode restrictions and validation logic
 
-### 2. Allure Report Implementation
+---
+
+### Part 2: Test Automation Framework (25% AI-Assisted) 👨‍💻
+
+**Important Context:** This is my core expertise as a QA Engineer. While AI helped with boilerplate, the architecture, design, implementation, debugging, and optimization were done manually using my professional experience.
+
+**Usage:** Asked AI for suggestions on test framework options and initial project structure.
+
+**AI Generated (~15%):**
+- Suggested WebDriverIO + Appium stack comparison
+- Provided basic project folder structure template
+- Generated initial package.json with dependencies
+
+**Manual Work (~85%):**
+- ✅ Evaluated framework options (WebDriverIO vs Detox vs Native Appium)
+- ✅ Made final architectural decisions based on project needs
+- ✅ Designed complete folder structure (helpers/, locators/, steps/, tests/)
+- ✅ Selected Page Object Model with Steps pattern
+- ✅ Decided on locator strategy (resource-id, uiautomator, accessibility)
+- ✅ Planned test data management approach
+
+
+### 3. Page Object Model Implementation (20% AI-Assisted)
+**Usage:** Asked AI for BasePage class template and method patterns.
+
+**AI Generated (~20%):**
+- BasePage class template with basic methods
+- Provided async/await WebDriverIO examples
+
+**Manual Work (~80%):**
+- ✅ Designed complete inheritance hierarchy (BasePage → Pages → Steps)
+- ✅ Implemented all custom locator types and strategies
+- ✅ Created 15+ BasePage helper methods (wait, click, getText, scroll, swipe, etc.)
+- ✅ Added comprehensive error handling and retry logic
+- ✅ Implemented detailed logging at every step
+- ✅ Created all Page classes (LoginPage, LandingPage, etc.)
+- ✅ Developed all Step classes (LoginSteps, GuestJourneySteps)
+- ✅ Recently refactored to use centralized constants
+- ✅ Removed code duplication (single reset method with inheritance)
+
+
+
+### 4. Allure Report Implementation (30% AI-Assisted)
 **Usage:** I asked AI to write scripts for implementing Allure report that:
 - Takes screenshots on test case failure
 - Saves HTML report to a folder with today's timestamp
 - Report names as TestAutomation_1, TestAutomation_2, and so on
 
-**Review Process:**
+**AI Generated (~30%):**
+- Basic Allure reporter configuration example
+- Screenshot capture code template
+- HTML report generation script skeleton
+
+**Manual Work (~70%):**
 - ✅ Configured automatic screenshot capture on test failure
-- ✅ Set up timestamp-based report folders
-- ✅ Added HTML report generation
+- ✅ Set up timestamp-based report folders with proper naming
+- ✅ Added HTML report generation with custom styling
+- ✅ Integrated Allure with Jenkins pipeline
+- ✅ Created generate-html-report.js with custom logic
+- ✅ Set up report history tracking
+- ✅ Configured proper cleanup of old reports
+
 
 ---
 
-### 3. Common Scripts Generation
+### 5. Common Scripts Generation (40% AI-Assisted)
 **Usage:** I asked AI to write common scripts which are easily obtained from Google to save time, including utility methods and helper functions.
 
-**Review Process:**
-- ✅ Generated standard utility code quickly
-- ✅ Created helper methods for common operations
-- ✅ Saved time on boilerplate code
+**AI Generated (~40%):**
+- Common utility method templates
+- Helper function boilerplate
+- Standard JavaScript/TypeScript patterns
+
+**Manual Work (~60%):**
+- ✅ Created custom Logger class with step, success, warn, error levels
+- ✅ Implemented ScreenshotHelper with Allure integration
+- ✅ Built TestHelper with project-specific utilities
+- ✅ Added custom wait strategies beyond standard waits
+- ✅ Implemented proper error handling and recovery
+- ✅ Extracted all hardcoded values to constants file
+
 
 ---
 
-### 4. GitHub Actions and Pipeline Scripts
+### 6. GitHub Actions and Pipeline Scripts (35% AI-Assisted)
 **Usage:** I instructed AI to generate GitHub Actions and pipeline scripts to:
 - Set rules for code push and commit messages
 - Keep branches safe with proper validation
 
-**Review Process:**
-- ✅ Created GitHub Actions workflows
-- ✅ Added commit message validation rules
-- ✅ Implemented branch protection configuration
+**AI Generated (~35%):**
+- GitHub Actions workflow templates
+- Jenkinsfile basic structure
+- Commit message validation regex patterns
+
+**Manual Work (~65%):**
+- ✅ Designed complete Jenkins pipeline with 7 stages
+- ✅ Configured GitHub Actions for PR validation only
+- ✅ Set up conventional commit validation rules
+- ✅ Implemented branch protection and code quality checks
+- ✅ Added Allure report publishing in Jenkins
+- ✅ Configured email notifications and build parameters
+- ✅ Optimized CI/CD to avoid duplication (tests in Jenkins, validation in GitHub Actions)
+
 
 ---
 
-### 5. Quick Execution Scripts
+### 7. Quick Execution Scripts (30% AI-Assisted)
 **Usage:** I asked AI to generate execution scripts for quick command execution to run tests easily.
 
-**Review Process:**
-- ✅ Created NPM scripts for different test suites
-- ✅ Added shell scripts for platform-specific execution
-- ✅ Made test execution simple and fast
+**AI Generated (~30%):**
+- Basic npm script patterns
+- Simple shell script templates
+
+**Manual Work (~70%):**
+- ✅ Created comprehensive npm scripts for all test suites (@sanity, @smoke, @regression)
+- ✅ Built run-london-unlocked-tests.sh with proper APK installation logic
+- ✅ Implemented proper error checking and validation
+- ✅ Made all scripts cross-platform compatible
 
 ---
 
-### 6. TypeScript Error Resolution
+### 8. TypeScript Error Resolution (25% AI-Assisted)
 **Usage:** I was getting some TypeScript errors and AI helped me find them out quickly.
 
-**Review Process:**
-- ✅ Identified TypeScript compilation errors
-- ✅ Fixed type definitions and imports
-- ✅ Resolved errors faster than manual debugging
+**AI Generated (~25%):**
+- Identified some type definition issues
+- Suggested interface improvements
 
----
+**Manual Work (~75%):**
+- ✅ Fixed all TypeScript compilation errors manually
+- ✅ Improved type safety throughout the codebase
+- ✅ Added proper interfaces and type definitions
+- ✅ Configured tsconfig.json for strict mode
+- ✅ Resolved complex type inference issues
+- ✅ Set up path aliases for cleaner imports
 
-### 7. Code Review for Hardcoding
+### 9. Code Review for Hardcoding
 **Usage:** I asked AI to checkout my code to remove any hardcoding or user-specific paths.
 
 **Review Process:**
@@ -191,13 +294,13 @@ I asked AI to help create a React Native application with the following specific
 
 ### Improved Prompts (Specific)
 ```
-✅ "Create a LoginPage class extending BasePage with methods: login(email, password), 
+✅ "Create a LoginPage class extending BasePage with methods: login(email, password),
     verifyLoginSuccess(), getErrorMessage(). Use resource ID locators for Android."
 
-✅ "Write a test case for invalid email format validation. Expected error: 'Please enter 
+✅ "Write a test case for invalid email format validation. Expected error: 'Please enter
     a valid email'. Use Mocha describe/it, Chai assertions, and LoginSteps class."
 
-✅ "Configure WebDriverIO for Android with Appium 2.x, TypeScript, Mocha reporter, 
+✅ "Configure WebDriverIO for Android with Appium 2.x, TypeScript, Mocha reporter,
     Allure reporting, and 60-second timeouts."
 ```
 
@@ -284,7 +387,7 @@ For every AI-generated code, I reviewed:
 
 ---
 
-**Last Updated:** December 18, 2024
-**AI Tool:** GitHub Copilot (GPT-4)
+**Last Updated:** December 23, 2024
+**AI Tool:** GitHub Copilot (Claude Sonnet 4.5)
 **Project:** London Unlocked Mobile Test Automation
 

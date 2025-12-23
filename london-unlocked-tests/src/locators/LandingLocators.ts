@@ -6,23 +6,15 @@ import { BaseLocators } from './BaseLocators';
 
 export class LandingLocators extends BaseLocators {
 
-    // ========== Element IDs (testID from React Native) ==========
-    static readonly IDs = {
-        GET_STARTED_BUTTON: 'get-started-button',
-        GUEST_BUTTON: 'continue-as-guest-button',
+    static readonly AUTOMATOR = {
+        WELCOME_TITLE: 'text:London Unlocked',
+        GET_STARTED_BUTTON: 'resource-id:get-started-button',
+        GUEST_BUTTON: 'resource-id:continue-as-guest-button',
     };
 
-    // ========== Element Texts (for text-based verification) ==========
-    static readonly TEXTS = {
-        WELCOME_TITLE: 'London Unlocked',
-        GET_STARTED: 'Get Started',
-        TAGLINE: 'Discover London\'s Hidden Gems',
-    };
-
-    // ========== Locator Types (Constants) ==========
     static readonly LOCATOR_TYPES = {
-        ID: 'id' as const,
-        TEXT: 'uiautomator' as const,
+        ID: 'accessibility' as const,
+        AUTOMATOR: 'uiautomator' as const,
     };
 }
 

@@ -17,10 +17,18 @@ describe('Login Screen Feature', () => {
 
     afterEach(async () => {
         await TestHelper.takeScreenshot('auth-feature-test');
+
+        // Clean up after each test - reset app to landing page for next test
+        try {
+            await authSteps.cleanupAfterTest();
+        } catch (error) {
+            console.log('Test cleanup completed with warnings');
+        }
     });
 
     // TEST 1: DATA-DRIVEN LOGIN SCENARIOS
     describe('Data-Driven Login Scenarios with Invalid Data', () => {
+
         const loginScenarios = [
             {
                 scenario: 'Invalid email pattern',
@@ -47,10 +55,10 @@ describe('Login Screen Feature', () => {
 
         loginScenarios.forEach(({ scenario, email, password, fieldToCheck, expectedBehavior }) => {
             it(`@test @sanity should handle ${scenario} - ${expectedBehavior}`, async () => {
-                await loginSteps.userEnterEmailAddress(email)
-                await loginSteps.userEnterEmailPassword(password)
-                await loginSteps.userClicksOnLogin()
-                await loginSteps.userVerifyCredentialsError(fieldToCheck)
+                await loginSteps.userEnterEmailAddress(email);
+                await loginSteps.userEnterEmailPassword(password);
+                await loginSteps.userClicksOnLogin();
+                await loginSteps.userVerifyCredentialsError(fieldToCheck);
             });
         });
     });
@@ -59,12 +67,10 @@ describe('Login Screen Feature', () => {
     describe('Successful Login Attempt', () => {
         it('@test @sanity should login successfully with valid credentials', async () => {
             TestHelper.logInfo('Testing successful login flow');
-            await loginSteps.userEnterEmailAddress(testData.validUser.email)
-            await loginSteps.userEnterEmailPassword(testData.validUser.password)
-            await loginSteps.userClicksOnLogin()
-            await loginSteps.userShouldbeLoggedSuccessfully()
-
-
+            await loginSteps.userEnterEmailAddress(testData.validUser.email);
+            await loginSteps.userEnterEmailPassword(testData.validUser.password);
+            await loginSteps.userClicksOnLogin();
+            await loginSteps.userShouldbeLoggedSuccessfully();
         });
     });
 

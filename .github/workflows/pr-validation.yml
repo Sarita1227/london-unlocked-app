@@ -1,4 +1,4 @@
-name: 🔀 Pull Request Validation
+name: Pull Request Validation
 
 on:
   pull_request:
@@ -9,24 +9,24 @@ on:
 
 jobs:
   pr-validation:
-    name: 🔍 PR Validation
+    name: PR Validation
     runs-on: ubuntu-latest
 
     steps:
-      - name: 📥 Checkout code
+      - name: Checkout code
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: 📝 Check PR title
+      - name: Check PR title
         run: |
           PR_TITLE="${{ github.event.pull_request.title }}"
           echo "PR Title: $PR_TITLE"
           
           if echo "$PR_TITLE" | grep -qE "^(feat|fix|docs|style|refactor|test|chore|perf|ci|build)(\(.+\))?: .{10,}"; then
-            echo "✅ PR title follows conventional commits format"
+            echo "✓ PR title follows conventional commits format"
           else
-            echo "❌ PR title must follow conventional commits format"
+            echo "✗ PR title must follow conventional commits format"
             echo ""
             echo "Format: <type>(optional scope): <description>"
             echo ""
@@ -39,20 +39,20 @@ jobs:
             exit 1
           fi
 
-      - name: 📋 Check PR description
+      - name: Check PR description
         run: |
           PR_BODY="${{ github.event.pull_request.body }}"
           
           if [ -z "$PR_BODY" ]; then
-            echo "⚠️  PR has no description. Consider adding:"
+            echo "Warning: PR has no description. Consider adding:"
             echo "  - What changes were made"
             echo "  - Why these changes were made"
             echo "  - How to test the changes"
           else
-            echo "✅ PR has description"
+            echo "✓ PR has description"
           fi
 
-      - name: 🏷️ Check PR labels
+      - name: Check PR labels
         uses: actions/github-script@v7
         with:
           script: |
@@ -66,15 +66,15 @@ jobs:
             
             const hasLabel = labels.length > 0;
             if (!hasLabel) {
-              console.log('⚠️  No labels applied. Consider adding labels like:');
+              console.log('Warning: No labels applied. Consider adding labels like:');
               console.log('  - enhancement, bug, documentation, tests, etc.');
             } else {
-              console.log('✅ PR has labels');
+              console.log('✓ PR has labels');
             }
 
-      - name: 📊 Analyze changes
+      - name: Analyze changes
         run: |
-          echo "## 📊 Change Analysis" >> $GITHUB_STEP_SUMMARY
+          echo "## Change Analysis" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           
           # Files changed

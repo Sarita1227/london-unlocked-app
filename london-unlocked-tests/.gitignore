@@ -4,10 +4,8 @@ package-lock.json
 yarn.lock
 
 # Test Reports
-reports/allure-results/*
-reports/allure-report/*
 reports/html-reports/*
-reports/screenshots/*
+!reports/html-reports/.gitkeep
 *.log
 
 # Build outputs

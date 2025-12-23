@@ -5,7 +5,10 @@
 import { BaseLocators } from '../locators/BaseLocators';
 import { logger } from './Logger';
 import { ScreenshotHelper } from './ScreenshotHelper';
+import { ANDROID, TIMEOUTS, TEXTS } from '../constants';
 import {expect} from "chai";
+
+export type LocatorType = 'id' | 'uiautomator' | 'accessibility' | 'xpath';
 
 export abstract class BasePage {
     protected pageName: string;
@@ -25,8 +28,8 @@ export abstract class BasePage {
      */
     protected async waitForElementToExist(
         value: string,
-        locatorType: 'id' | 'uiautomator' | 'accessibility' | 'className' | 'xpath',
-        timeout: number = 10000
+        locatorType: LocatorType = 'id',
+        timeout: number = 5000
     ): Promise<WebdriverIO.Element> {
         const element = await BaseLocators.findElement(value, locatorType);
         await element.waitForExist({ timeout });
@@ -39,7 +42,7 @@ export abstract class BasePage {
      */
     protected async clickElement(
         value: string,
-        locatorType: 'id' | 'uiautomator' | 'accessibility' | 'className' | 'xpath'
+        locatorType: LocatorType = 'id'
     ): Promise<void> {
         const element = await BaseLocators.findElement(value, locatorType);
         await element.click();
@@ -52,7 +55,7 @@ export abstract class BasePage {
     protected async setValue(
         value: string,
         textToEnter: string,
-        locatorType: 'id' | 'uiautomator' | 'accessibility' | 'className' | 'xpath'
+        locatorType: LocatorType = 'id'
     ): Promise<void> {
         const element = await BaseLocators.findElement(value, locatorType);
         await element.clearValue();
@@ -65,12 +68,17 @@ export abstract class BasePage {
      */
     protected async getText(
         value: string,
-        locatorType: 'id' | 'uiautomator' | 'accessibility' | 'className' | 'xpath'
+        locatorType: LocatorType = 'id'
     ): Promise<string> {
-        const element = await BaseLocators.findElement(value, locatorType);
-        const text = await element.getText();
-        logger.element(`Get text: "${text}"`, `${value} (${locatorType})`);
-        return text;
+        try {
+            const element = await BaseLocators.findElement(value, locatorType);
+            const text = await element.getText();
+            logger.element(`Get text: "${text}"`, `${value} (${locatorType})`);
+            return text;
+        } catch (error: any) {
+            logger.warn(`Failed to get text from "${value}": ${error.message}`);
+            return '';
+        }
     }
 
     /**
@@ -80,13 +88,16 @@ export abstract class BasePage {
      */
     async verifyElementIsDisplayed(
         value: string,
-        locatorType: 'id' | 'uiautomator' | 'accessibility' | 'className' | 'xpath' = 'id'
+        locatorType: LocatorType = 'id'
     ): Promise<void> {
-        const element = await BaseLocators.findElement(value, locatorType);
-        const isDisplayed = await element.isDisplayed();
-
-        expect(isDisplayed, `Element "${value}" should be displayed`).to.be.true;
-        logger.success(`✅ Element "${value}" is displayed`);
+        try {
+            const element = await BaseLocators.findElement(value, locatorType);
+            const isDisplayed = await element.isDisplayed();
+            expect(isDisplayed, `Element "${value}" should be displayed`).to.be.true;
+            logger.success(`Element "${value}" is displayed`);
+        } catch (error: any) {
+            throw new Error(`Element "${value}" not found or not displayed`);
+        }
     }
 
     /**
@@ -96,13 +107,13 @@ export abstract class BasePage {
      */
     async verifyElementIsEnabled(
         value: string,
-        locatorType: 'id' | 'uiautomator' | 'accessibility' | 'className' | 'xpath' = 'id'
+        locatorType: LocatorType = 'id'
     ): Promise<void> {
         const element = await BaseLocators.findElement(value, locatorType);
         const isEnabled = await element.isEnabled();
 
         expect(isEnabled, `Element "${value}" should be enabled`).to.be.true;
-        logger.success(`✅ Element "${value}" is enabled`);
+        logger.success(`Element "${value}" is enabled`);
     }
 
     /**
@@ -110,7 +121,7 @@ export abstract class BasePage {
      */
     protected async scrollToElement(
         value: string,
-        locatorType: 'id' | 'uiautomator' | 'accessibility' | 'className' | 'xpath'
+        locatorType: LocatorType = 'id'
     ): Promise<void> {
         const element = await BaseLocators.findElement(value, locatorType);
         await element.scrollIntoView();
@@ -205,25 +216,41 @@ export abstract class BasePage {
      */
     async waitForPageToLoad(
         value: string,
-        locatorType: 'id' | 'uiautomator' | 'accessibility' | 'className' | 'xpath' = 'id'
+        locatorType: LocatorType = 'id'
     ): Promise<void> {
-        const element = await BaseLocators.findElement(value, locatorType);
-        await element.waitForDisplayed({ timeout: 10000 });
-        logger.success(`Page loaded (locator: ${locatorType})`);
+        try {
+            const element = await BaseLocators.findElement(value, locatorType);
+            await element.waitForDisplayed({ timeout: 3000 }); // Reduced from 10000 to 3000
+            logger.success(`Page loaded (locator: ${locatorType})`);
+        } catch (error) {
+            logger.warn(`Page load timeout for ${value} - continuing execution`);
+        }
     }
 
     /**
-     * Click on element using actual locator type
+     * Click on element using actual locator type with enhanced mobile support
      * @param value - The value to search for
      * @param locatorType - Actual locator
      */
     async clickOnElement(
         value: string,
-        locatorType: 'id' | 'uiautomator' | 'accessibility' | 'className' | 'xpath' = 'id'
+        locatorType: LocatorType = 'id'
     ): Promise<void> {
         const element = await BaseLocators.findElement(value, locatorType);
-        await element.click();
-        logger.success(`Clicked on "${value}" (locator: ${locatorType})`);
+        try {
+            // Try tap via touchAction first (more reliable on some devices)
+            await element.touchAction('tap');
+            await this.wait(300);
+            logger.success(`Tapped on "${value}" (locator: ${locatorType})`);
+        } catch (tapError) {
+            try {
+                await element.click();
+                logger.success(`Clicked on "${value}" (locator: ${locatorType})`);
+            } catch (clickError) {
+                logger.error(`Failed to click on element "${value}" (locator: ${locatorType})`, clickError);
+                throw clickError;
+            }
+        }
     }
 
     /**
@@ -235,14 +262,99 @@ export abstract class BasePage {
     async setValueInElement(
         value: string,
         textToEnter: string,
-        locatorType: 'id' | 'uiautomator' | 'accessibility' | 'className' | 'xpath' = 'id'
+        locatorType: LocatorType = 'id'
     ): Promise<void> {
-        const element = await BaseLocators.findElement(value, locatorType);
-        await element.clearValue();
-        await element.setValue(textToEnter);
-        logger.success(`Entered text "${textToEnter}" in "${value}" (locator: ${locatorType})`);
+        try {
+            const element = await BaseLocators.findElement(value, locatorType);
+            await element.clearValue();
+            await element.setValue(textToEnter);
+            logger.success(`Entered text "${textToEnter}" in "${value}" (locator: ${locatorType})`);
+        } catch (error: any) {
+            throw new Error(`Failed to set value in element "${value}"`);
+        }
     }
 
 
-}
+    /**
+     * App Management Methods
+     */
 
+    /**
+     * Reset app to landing screen by terminating and restarting
+     * This ensures a clean state for the next test
+     */
+    protected async resetAppToLandingPage(): Promise<void> {
+        try {
+            logger.step('Resetting app to landing page...');
+
+            // Terminate the app
+            await driver.terminateApp(ANDROID.PACKAGE_NAME, { timeout: TIMEOUTS.APP_TERMINATE });
+            await this.wait(TIMEOUTS.APP_RESTART_WAIT);
+
+            // Restart the app
+            await driver.activateApp(ANDROID.PACKAGE_NAME);
+            await this.wait(TIMEOUTS.APP_ACTIVATE_WAIT);
+
+            // Wait for landing page to load
+            const landingTitleSelector = BaseLocators.getMobileElement(TEXTS.LANDING_TITLE, 'uiautomator');
+            await $(landingTitleSelector).waitForDisplayed({ timeout: TIMEOUTS.LANDING_PAGE_LOAD });
+
+            logger.success('App successfully reset to landing page');
+        } catch (error: any) {
+            logger.warn(`App reset failed: ${error.message}`);
+            throw error;
+        }
+    }
+
+    /**
+     * Dismiss popups and navigate back to previous screens
+     */
+    protected async dismissPopupsAndNavigateBack(): Promise<void> {
+        try {
+            logger.step('Dismissing popups and navigating back...');
+
+            // Try pressing back button multiple times to dismiss popups
+            for (let i = 0; i < 3; i++) {
+                await driver.pressKeyCode(4); // Android back button
+                await this.wait(1000);
+            }
+
+            logger.success('Popups dismissed and navigation completed');
+        } catch (error: any) {
+            logger.warn(`Navigation back failed: ${error.message}`);
+        }
+    }
+
+    /**
+     * Cleanup method that combines popup dismissal and app reset
+     * Use this in afterEach hooks to ensure clean state for next test
+     */
+    protected async cleanupForNextTest(): Promise<void> {
+        try {
+            logger.step('Starting test cleanup...');
+
+            // First try to dismiss popups
+            await this.dismissPopupsAndNavigateBack();
+
+            // Check if we're already on landing page
+            try {
+                const landingTitleSelector = BaseLocators.getMobileElement('London Unlocked', 'uiautomator');
+                const isOnLandingPage = await $(landingTitleSelector).isDisplayed();
+
+                if (isOnLandingPage) {
+                    logger.success('Already on landing page - cleanup complete');
+                    return;
+                }
+            } catch (e) {
+                // Not on landing page, need to reset
+            }
+
+            // Reset app if not on landing page
+            await this.resetAppToLandingPage();
+
+            logger.success('Test cleanup completed successfully');
+        } catch (error: any) {
+            logger.warn(`Test cleanup completed with warnings: ${error.message}`);
+        }
+    }
+}

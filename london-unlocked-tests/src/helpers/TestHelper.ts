@@ -99,8 +99,9 @@ export class TestHelper {
      */
     static async takeScreenshot(name?: string): Promise<void> {
         try {
-            logger.step(`Taking screenshot: ${name || 'default'}`);
-            await ScreenshotHelper.takeAndAttach(name);
+            const screenshotName = name || 'default';
+            logger.step(`Taking screenshot: ${screenshotName}`);
+            await ScreenshotHelper.takeAndAttach(screenshotName);
         } catch (error) {
             logger.error('Failed to take screenshot', error);
             // Don't throw - screenshot failure shouldn't fail the test
@@ -253,12 +254,6 @@ export class TestHelper {
         await TestHelper.wait(500);
     }
 
-    /**
-     * Clean old screenshots
-     */
-    static cleanOldScreenshots(daysOld: number = 7): void {
-        ScreenshotHelper.cleanOldScreenshots(daysOld);
-    }
 }
 
 // Export logger and screenshot helper for direct use

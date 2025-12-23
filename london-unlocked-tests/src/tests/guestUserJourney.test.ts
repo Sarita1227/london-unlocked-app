@@ -11,13 +11,20 @@ describe("Guest user journey feature", () => {
 
     afterEach(async () => {
         await TestHelper.takeScreenshot("guest-user-journey-feature");
+
+        // Clean up after each test - reset app to landing page for next test
+        try {
+            await authSteps.cleanupAfterTest();
+        } catch (error) {
+            console.log('⚠️ Test cleanup completed with warnings');
+        }
     });
 
     /**
      * Test 1: Guest user can access unlocked content
      */
     //We can also add test level beforeEach and afterEach hooks if needed
-    it("@test @sanity should allow guest user to access unlocked content", async () => {
+    it("@test should allow guest user to access unlocked content", async () => {
         await authSteps.verifyGuestScreenOnClickingContinueAsGuestButton();
         await authSteps.userClicksOnUnclockedContent();
         await authSteps.userVerifyTheLogiRequiredPopupisDisplayed();

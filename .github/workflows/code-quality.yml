@@ -1,4 +1,4 @@
-name: 🔍 Code Quality & Commit Rules
+name: Code Quality & Commit Validation
 
 on:
   push:
@@ -11,22 +11,22 @@ on:
 
 jobs:
   commit-lint:
-    name: 📝 Commit Message Validation
+    name: Commit Message Validation
     runs-on: ubuntu-latest
     if: github.event_name == 'push'
 
     steps:
-      - name: 📥 Checkout code
+      - name: Checkout code
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: 📦 Setup Node.js
+      - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '18'
 
-      - name: 📝 Validate commit messages
+      - name: Validate commit messages
         run: |
           echo "Checking commit messages..."
           
@@ -36,9 +36,9 @@ jobs:
           
           # Check if commit follows conventional commits format
           if echo "$COMMIT_MSG" | grep -qE "^(feat|fix|docs|style|refactor|test|chore|perf|ci|build|revert)(\(.+\))?: .{3,}"; then
-            echo "✅ Commit message follows conventional commits format"
+            echo "✓ Commit message follows conventional commits format"
           else
-            echo "❌ Commit message does NOT follow conventional commits format"
+            echo "✗ Commit message does NOT follow conventional commits format"
             echo ""
             echo "Expected format: <type>(optional scope): <description>"
             echo ""
@@ -64,7 +64,7 @@ jobs:
           fi
 
   code-quality:
-    name: 🔍 Code Quality
+    name: Code Quality
     runs-on: ubuntu-latest
 
     strategy:
@@ -72,56 +72,56 @@ jobs:
         project: ['london-unlocked-tests']
 
     steps:
-      - name: 📥 Checkout code
+      - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: 📦 Setup Node.js
+      - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '18'
           cache: 'npm'
           cache-dependency-path: ${{ matrix.project }}/package-lock.json
 
-      - name: 📦 Install dependencies
+      - name: Install dependencies
         working-directory: ${{ matrix.project }}
         run: npm ci
 
-      - name: 🔍 Run ESLint
+      - name: Run ESLint
         working-directory: ${{ matrix.project }}
         run: npm run lint
         continue-on-error: true
 
-      - name: 🔍 TypeScript check
+      - name: TypeScript check
         working-directory: ${{ matrix.project }}
         run: npx tsc --noEmit
 
-      - name: 📊 Code complexity analysis
+      - name: Code complexity analysis
         working-directory: ${{ matrix.project }}
         run: |
           npx complexity-report src/ --format json > complexity-report.json || true
         continue-on-error: true
 
   security-scan:
-    name: 🔒 Security Scan
+    name: Security Scan
     runs-on: ubuntu-latest
 
     steps:
-      - name: 📥 Checkout code
+      - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: 🔒 Run npm audit (App)
+      - name: Run npm audit (App)
         working-directory: london-unlocked
         run: |
-          npm audit --audit-level=moderate || echo "⚠️  Vulnerabilities found in app dependencies"
+          npm audit --audit-level=moderate || echo "Warning: Vulnerabilities found in app dependencies"
         continue-on-error: true
 
-      - name: 🔒 Run npm audit (Tests)
+      - name: Run npm audit (Tests)
         working-directory: london-unlocked-tests
         run: |
-          npm audit --audit-level=moderate || echo "⚠️  Vulnerabilities found in test dependencies"
+          npm audit --audit-level=moderate || echo "Warning: Vulnerabilities found in test dependencies"
         continue-on-error: true
 
-      - name: 🔍 Secret scanning
+      - name: Secret scanning
         uses: trufflesecurity/trufflehog@main
         with:
           path: ./
@@ -130,25 +130,25 @@ jobs:
         continue-on-error: true
 
   branch-protection:
-    name: 🛡️ Branch Protection Rules
+    name: Branch Protection Rules
     runs-on: ubuntu-latest
     if: github.event_name == 'pull_request'
 
     steps:
-      - name: 📥 Checkout code
+      - name: Checkout code
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: 🔍 Check PR title
+      - name: Check PR title
         run: |
           PR_TITLE="${{ github.event.pull_request.title }}"
           echo "PR Title: $PR_TITLE"
           
           if echo "$PR_TITLE" | grep -qE "^(feat|fix|docs|style|refactor|test|chore|perf|ci|build)(\(.+\))?: .{3,}"; then
-            echo "✅ PR title follows conventional commits format"
+            echo "✓ PR title follows conventional commits format"
           else
-            echo "⚠️  PR title should follow conventional commits format"
+            echo "Warning: PR title should follow conventional commits format"
             echo "Expected: <type>(optional scope): <description>"
           fi
 
