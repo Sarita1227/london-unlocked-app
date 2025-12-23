@@ -1,5 +1,11 @@
 # 🚀 London Unlocked - Mobile Test Automation Framework
 
+[![Code Quality](https://github.com/Sarita1227/london-unlocked-app/actions/workflows/code-quality.yml/badge.svg)](https://github.com/Sarita1227/london-unlocked-app/actions/workflows/code-quality.yml)
+[![PR Validation](https://github.com/Sarita1227/london-unlocked-app/actions/workflows/pr-validation.yml/badge.svg)](https://github.com/Sarita1227/london-unlocked-app/actions/workflows/pr-validation.yml)
+[![Node.js Version](https://img.shields.io/badge/node-%3E%3D18.0.0-brightgreen)](https://nodejs.org/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.9.3-blue)](https://www.typescriptlang.org/)
+[![WebDriverIO](https://img.shields.io/badge/WebDriverIO-8.27-orange)](https://webdriver.io/)
+
 **Production-ready test automation for React Native mobile app with complete CI/CD pipeline**
 
 ---
@@ -35,6 +41,11 @@ Complete mobile testing solution featuring:
 - **Reporting:** Allure HTML reports with timestamps
 - **CI/CD:** Jenkins Pipeline, GitHub Actions workflows
 - **Code Quality:** ESLint, Prettier, TypeScript strict mode
+
+### 🔄 CI/CD Workflows
+- **[Code Quality & Commit Validation](https://github.com/Sarita1227/london-unlocked-app/actions/workflows/code-quality.yml)** - ESLint, TypeScript compilation, commit message validation
+- **[PR Validation](https://github.com/Sarita1227/london-unlocked-app/actions/workflows/pr-validation.yml)** - Pull request title, description, and label validation
+- **Jenkins Pipeline** - Automated test execution with Allure reports (`Jenkinsfile`)
 
 ---
 
