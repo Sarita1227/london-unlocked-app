@@ -235,7 +235,7 @@ export class BaseLocators {
                 case 'type':
                     return pred ? `${pred} AND type == "${val}"` : `type == "${val}"`;
                 case 'visible':
-                    return pred ? `${pred} AND visible == 1` : `visible == 1`;
+                    return pred ? `${pred} AND visible == 1` : 'visible == 1';
                 default:
                     return pred;
             }

@@ -16,7 +16,7 @@ export interface PlatformCapabilities {
     'appium:autoGrantPermissions'?: boolean;
     'appium:noReset'?: boolean;
     'appium:fullReset'?: boolean;
-    [key: string]: any;
+    [key: string]: unknown;
 }
 
 /**
@@ -66,7 +66,9 @@ export function getAndroidCapabilities(): PlatformCapabilities {
         // Use APK file if not using pre-installed app
         if (!useInstalledApp) {
             // Check if APK exists, if not, provide helpful error message
-            if (!require('fs').existsSync(appPath)) {
+            // eslint-disable-next-line @typescript-eslint/no-var-requires
+            const fs = require('fs');
+            if (!fs.existsSync(appPath)) {
                 throw new Error(`APK file not found at: ${appPath}\n\nPlease:\n1. Build your APK using 'npm run build:android'\n2. Or set USE_INSTALLED_APP=true to use pre-installed app\n3. Or set USE_EXPO_GO=true to use Expo Go (development only)`);
             }
             capabilities['appium:app'] = appPath;
@@ -99,7 +101,7 @@ export function getIosCapabilities(): PlatformCapabilities {
 /**
  * Get BrowserStack capabilities (for cloud testing)
  */
-export function getBrowserStackCapabilities(platform: 'android' | 'ios'): any {
+export function getBrowserStackCapabilities(platform: 'android' | 'ios'): PlatformCapabilities {
     const commonCaps = {
         'bstack:options': {
             userName: process.env.BROWSERSTACK_USERNAME,
@@ -162,12 +164,4 @@ export function getAppiumPort(): number {
     return parseInt(process.env.APPIUM_PORT || '4723', 10);
 }
 
-/**
- * Get Appium server URL
- */
-export function getAppiumUrl(): string {
-    const host = process.env.APPIUM_HOST || 'localhost';
-    const port = getAppiumPort();
-    return `http://${host}:${port}`;
-}
 

@@ -13,7 +13,7 @@ export enum LogLevel {
 
 export class Logger {
     private static instance: Logger;
-    // @ts-ignore - Used for future log level filtering
+    // Used for future log level filtering
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     private logLevel: LogLevel = LogLevel.INFO;
 
@@ -57,7 +57,7 @@ export class Logger {
     /**
      * Log message with level
      */
-    private log(level: LogLevel, message: string, data?: any): void {
+    private log(level: LogLevel, message: string, data?: unknown): void {
         const timestamp = this.getTimestamp();
         const emoji = this.getEmoji(level);
         const logMessage = `[${timestamp}] ${emoji} ${level}: ${message}`;
@@ -77,30 +77,30 @@ export class Logger {
     /**
      * Debug log
      */
-    public debug(message: string, data?: any): void {
+    public debug(message: string, data?: unknown): void {
         this.log(LogLevel.DEBUG, message, data);
     }
 
     /**
      * Info log
      */
-    public info(message: string, data?: any): void {
+    public info(message: string, data?: unknown): void {
         this.log(LogLevel.INFO, message, data);
     }
 
     /**
      * Warning log
      */
-    public warn(message: string, data?: any): void {
+    public warn(message: string, data?: unknown): void {
         this.log(LogLevel.WARN, message, data);
     }
 
     /**
      * Error log
      */
-    public error(message: string, error?: Error | any): void {
-        this.log(LogLevel.ERROR, message, error?.message || error);
-        if (error?.stack) {
+    public error(message: string, error?: Error | unknown): void {
+        this.log(LogLevel.ERROR, message, error instanceof Error ? error.message : error);
+        if (error instanceof Error && error.stack) {
             console.error('Stack trace:', error.stack);
         }
     }
@@ -108,7 +108,7 @@ export class Logger {
     /**
      * Success log
      */
-    public success(message: string, data?: any): void {
+    public success(message: string, data?: unknown): void {
         this.log(LogLevel.SUCCESS, message, data);
     }
 
@@ -122,7 +122,7 @@ export class Logger {
     /**
      * Test assertion log
      */
-    public assertion(description: string, expected: any, actual: any): void {
+    public assertion(description: string, expected: unknown, actual: unknown): void {
         console.log(`  🔍 Assertion: ${description}`);
         console.log(`     Expected: ${expected}`);
         console.log(`     Actual: ${actual}`);

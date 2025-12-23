@@ -1,9 +1,9 @@
 import { TestHelper } from '../helpers/TestHelper';
 import { BasePage } from '../helpers/BasePage';
 import { LandingLocators } from '../locators/LandingLocators';
-import {LoginLocators} from "../locators/LoginLocators";
-import {expect} from "chai";
-import {BaseLocators} from "../locators/BaseLocators";
+import {LoginLocators} from '../locators/LoginLocators';
+import {expect} from 'chai';
+import {BaseLocators} from '../locators/BaseLocators';
 
 /**
  * Login Step Definitions
@@ -24,32 +24,32 @@ export class LoginInSteps extends BasePage {
     }
 
     async userEnterEmailAddress(value: string): Promise<void> {
-        TestHelper.logStep(`User enters email`);
+        TestHelper.logStep('User enters email');
         await this.setValueInElement(LoginLocators.AUTOMATOR.EMAIL_INPUT, value, LandingLocators.LOCATOR_TYPES.AUTOMATOR);
 
     }
 
     async userEnterEmailPassword(value: string): Promise<void> {
-        TestHelper.logStep(`User enters password`);
+        TestHelper.logStep('User enters password');
         await this.setValueInElement(LoginLocators.AUTOMATOR.PASSWORD_INPUT, value, LandingLocators.LOCATOR_TYPES.AUTOMATOR);
 
     }
 
     async userClicksOnLogin(): Promise<void> {
-        TestHelper.logStep(`User clicks on LoginBtn`);
+        TestHelper.logStep('User clicks on LoginBtn');
         await this.clickOnElement(LoginLocators.AUTOMATOR.LOGIN_BUTTON, LandingLocators.LOCATOR_TYPES.AUTOMATOR);
 
     }
 
     async userVerifyInvalidEmailErrorMessage(expectedMessage: string): Promise<void> {
-        TestHelper.logStep(`Verify invalid email error message`);
+        TestHelper.logStep('Verify invalid email error message');
         const actualErrorMessage = await this.getText(LoginLocators.AUTOMATOR.EMAIL_ERROR_MESSAGE, LandingLocators.LOCATOR_TYPES.AUTOMATOR);
         expect(actualErrorMessage, `Error message should be "${expectedMessage}"`).to.equal(expectedMessage);
         TestHelper.logSuccess(`Error message verified: "${actualErrorMessage}"`);
     }
 
     async userVerifyInvalidPasswordErrorMessage(expectedMessage: string): Promise<void> {
-        TestHelper.logStep(`Verify invalid password error message`);
+        TestHelper.logStep('Verify invalid password error message');
         const actualErrorMessage = await this.getText(LoginLocators.AUTOMATOR.PASSWORD_ERROR_MESSAGE, LandingLocators.LOCATOR_TYPES.AUTOMATOR);
         expect(actualErrorMessage, `Error message should be "${expectedMessage}"`).to.equal(expectedMessage);
         TestHelper.logSuccess(`Error message verified: "${actualErrorMessage}"`);

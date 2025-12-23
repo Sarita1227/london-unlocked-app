@@ -38,7 +38,7 @@ export class ScreenshotHelper {
         try {
             const fileName = this.generateFileName(testName.replace(/[^a-z0-9]/gi, '_'));
             await this.takeScreenshot(fileName);
-            logger.success(`Screenshot captured for HTML report`);
+            logger.success('Screenshot captured for HTML report');
         } catch (error) {
             logger.warn('Failed to capture screenshot for HTML report', error);
         }

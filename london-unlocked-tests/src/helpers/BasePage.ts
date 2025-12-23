@@ -6,7 +6,7 @@ import { BaseLocators } from '../locators/BaseLocators';
 import { logger } from './Logger';
 import { ScreenshotHelper } from './ScreenshotHelper';
 import { ANDROID, TIMEOUTS, TEXTS } from '../constants';
-import {expect} from "chai";
+import {expect} from 'chai';
 
 export type LocatorType = 'id' | 'uiautomator' | 'accessibility' | 'xpath';
 
@@ -75,8 +75,9 @@ export abstract class BasePage {
             const text = await element.getText();
             logger.element(`Get text: "${text}"`, `${value} (${locatorType})`);
             return text;
-        } catch (error: any) {
-            logger.warn(`Failed to get text from "${value}": ${error.message}`);
+        } catch (error: unknown) {
+            const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+            logger.warn(`Failed to get text from "${value}": ${errorMessage}`);
             return '';
         }
     }
@@ -95,7 +96,7 @@ export abstract class BasePage {
             const isDisplayed = await element.isDisplayed();
             expect(isDisplayed, `Element "${value}" should be displayed`).to.be.true;
             logger.success(`Element "${value}" is displayed`);
-        } catch (error: any) {
+        } catch (error: unknown) {
             throw new Error(`Element "${value}" not found or not displayed`);
         }
     }
@@ -166,9 +167,10 @@ export abstract class BasePage {
                 { action: 'moveTo', options: { x: endX, y: endY } },
                 { action: 'release' }
             ]);
-        } catch (error: any) {
+        } catch (error: unknown) {
+            const errorMessage = error instanceof Error ? error.message : 'Unknown error';
             logger.error(`Failed to swipe ${direction}`, error);
-            throw new Error(`Failed to swipe ${direction}: ${error.message}`);
+            throw new Error(`Failed to swipe ${direction}: ${errorMessage}`);
         }
     }
 
@@ -269,7 +271,7 @@ export abstract class BasePage {
             await element.clearValue();
             await element.setValue(textToEnter);
             logger.success(`Entered text "${textToEnter}" in "${value}" (locator: ${locatorType})`);
-        } catch (error: any) {
+        } catch (error: unknown) {
             throw new Error(`Failed to set value in element "${value}"`);
         }
     }
@@ -300,8 +302,9 @@ export abstract class BasePage {
             await $(landingTitleSelector).waitForDisplayed({ timeout: TIMEOUTS.LANDING_PAGE_LOAD });
 
             logger.success('App successfully reset to landing page');
-        } catch (error: any) {
-            logger.warn(`App reset failed: ${error.message}`);
+        } catch (error: unknown) {
+            const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+            logger.warn(`App reset failed: ${errorMessage}`);
             throw error;
         }
     }
@@ -320,8 +323,9 @@ export abstract class BasePage {
             }
 
             logger.success('Popups dismissed and navigation completed');
-        } catch (error: any) {
-            logger.warn(`Navigation back failed: ${error.message}`);
+        } catch (error: unknown) {
+            const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+            logger.warn(`Navigation back failed: ${errorMessage}`);
         }
     }
 
@@ -353,8 +357,9 @@ export abstract class BasePage {
             await this.resetAppToLandingPage();
 
             logger.success('Test cleanup completed successfully');
-        } catch (error: any) {
-            logger.warn(`Test cleanup completed with warnings: ${error.message}`);
+        } catch (error: unknown) {
+            const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+            logger.warn(`Test cleanup completed with warnings: ${errorMessage}`);
         }
     }
 }
