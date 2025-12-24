@@ -99,8 +99,9 @@ export class TestHelper {
      */
     static async takeScreenshot(name?: string): Promise<void> {
         try {
-            logger.step(`Taking screenshot: ${name || 'default'}`);
-            await ScreenshotHelper.takeAndAttach(name);
+            const screenshotName = name || 'default';
+            logger.step(`Taking screenshot: ${screenshotName}`);
+            await ScreenshotHelper.takeAndAttach(screenshotName);
         } catch (error) {
             logger.error('Failed to take screenshot', error);
             // Don't throw - screenshot failure shouldn't fail the test
@@ -125,7 +126,7 @@ export class TestHelper {
     /**
      * Log assertion
      */
-    static logAssertion(description: string, expected: any, actual: any): void {
+    static logAssertion(description: string, expected: unknown, actual: unknown): void {
         logger.assertion(description, expected, actual);
     }
 
@@ -139,7 +140,7 @@ export class TestHelper {
             await element.scrollIntoView();
         } catch (error) {
             logger.error('Failed to scroll to element', error);
-            // @ts-ignore
+            // @ts-expect-error - Error type checking
             throw new Error(`Failed to scroll to element: ${error.message}`);
         }
     }
@@ -176,7 +177,7 @@ export class TestHelper {
             logger.error(`Failed to click element: ${selector}`, error);
             // Take screenshot on click failure
             await ScreenshotHelper.takeAndAttach('Click Failed').catch(() => {});
-            // @ts-ignore
+            // @ts-expect-error - Error type checking
             throw new Error(`Failed to click element: ${selector} - ${error.message}`);
         }
     }
@@ -198,7 +199,7 @@ export class TestHelper {
         } catch (error) {
             const selector = await element.selector.catch(() => 'unknown');
             logger.error(`Failed to set value on element: ${selector}`, error);
-            // @ts-ignore
+            // @ts-expect-error - Error type checking
             throw new Error(`Failed to set value on element: ${selector} - ${error.message}`);
         }
     }
@@ -216,7 +217,7 @@ export class TestHelper {
         } catch (error) {
             const selector = await element.selector.catch(() => 'unknown');
             logger.error(`Failed to get text from element: ${selector}`, error);
-            // @ts-ignore
+            // @ts-expect-error - Error type checking
             throw new Error(`Failed to get text from element: ${selector} - ${error.message}`);
         }
     }
@@ -232,7 +233,7 @@ export class TestHelper {
             return displayed;
         } catch (error) {
             const selector = await element.selector.catch(() => 'unknown');
-            logger.element(`Is displayed: false (not found)`, selector);
+            logger.element('Is displayed: false (not found)', selector);
             return false;
         }
     }
@@ -253,12 +254,6 @@ export class TestHelper {
         await TestHelper.wait(500);
     }
 
-    /**
-     * Clean old screenshots
-     */
-    static cleanOldScreenshots(daysOld: number = 7): void {
-        ScreenshotHelper.cleanOldScreenshots(daysOld);
-    }
 }
 
 // Export logger and screenshot helper for direct use

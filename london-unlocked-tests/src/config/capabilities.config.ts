@@ -4,6 +4,7 @@
  */
 
 import * as path from 'path';
+import { ANDROID, EXPO, IOS } from '../constants';
 
 export interface PlatformCapabilities {
     platformName: string;
@@ -15,7 +16,7 @@ export interface PlatformCapabilities {
     'appium:autoGrantPermissions'?: boolean;
     'appium:noReset'?: boolean;
     'appium:fullReset'?: boolean;
-    [key: string]: any;
+    [key: string]: unknown;
 }
 
 /**
@@ -25,27 +26,53 @@ export function getAndroidCapabilities(): PlatformCapabilities {
     const appPath = process.env.ANDROID_APP_PATH ||
                     path.join(__dirname, '../../apps/android/app-debug.apk');
 
-    // If USE_INSTALLED_APP is set, use the app that's already installed on device
+    // Only use Expo Go if explicitly requested
+    const useExpoGo = process.env.USE_EXPO_GO === 'true';
     const useInstalledApp = process.env.USE_INSTALLED_APP === 'true';
 
-    // Capabilities matching working Appium Inspector config
-    const capabilities: PlatformCapabilities = {
-        platformName: 'Android',
-        'appium:automationName': 'UiAutomator2',
-        'appium:deviceName': 'emulator-5554',
-        'appium:appPackage': 'com.anonymous.londonunlocked',
-        'appium:appActivity': '.MainActivity',
-        'appium:noReset': true,
-        'appium:fullReset': false,
-        'appium:ensureWebviewsHavePages': true,
-        'appium:nativeWebScreenshot': true,
-        'appium:newCommandTimeout': 3600,
-        'appium:connectHardwareKeyboard': true
-    };
+    let capabilities: PlatformCapabilities;
 
-    // Use APK file if not using installed app
-    if (!useInstalledApp) {
-        capabilities['appium:app'] = appPath;
+    if (useExpoGo) {
+        // Use Expo Go app for development (only when explicitly requested)
+        capabilities = {
+            platformName: 'Android',
+            'appium:automationName': 'UiAutomator2',
+            'appium:deviceName': ANDROID.DEVICE_NAME,
+            'appium:appPackage': EXPO.PACKAGE_NAME,
+            'appium:appActivity': EXPO.ACTIVITY,
+            'appium:noReset': true,
+            'appium:fullReset': false,
+            'appium:ensureWebviewsHavePages': true,
+            'appium:nativeWebScreenshot': true,
+            'appium:newCommandTimeout': 3600,
+            'appium:connectHardwareKeyboard': true
+        };
+    } else {
+        // Use standalone APK (default behavior)
+        capabilities = {
+            platformName: 'Android',
+            'appium:automationName': 'UiAutomator2',
+            'appium:deviceName': ANDROID.DEVICE_NAME,
+            'appium:appPackage': ANDROID.PACKAGE_NAME,
+            'appium:appActivity': ANDROID.MAIN_ACTIVITY,
+            'appium:noReset': true,
+            'appium:fullReset': false,
+            'appium:ensureWebviewsHavePages': true,
+            'appium:nativeWebScreenshot': true,
+            'appium:newCommandTimeout': 3600,
+            'appium:connectHardwareKeyboard': true
+        };
+
+        // Use APK file if not using pre-installed app
+        if (!useInstalledApp) {
+            // Check if APK exists, if not, provide helpful error message
+            // eslint-disable-next-line @typescript-eslint/no-var-requires
+            const fs = require('fs');
+            if (!fs.existsSync(appPath)) {
+                throw new Error(`APK file not found at: ${appPath}\n\nPlease:\n1. Build your APK using 'npm run build:android'\n2. Or set USE_INSTALLED_APP=true to use pre-installed app\n3. Or set USE_EXPO_GO=true to use Expo Go (development only)`);
+            }
+            capabilities['appium:app'] = appPath;
+        }
     }
 
     return capabilities;
@@ -61,7 +88,7 @@ export function getIosCapabilities(): PlatformCapabilities {
     return {
         platformName: 'iOS',
         'appium:platformVersion': process.env.IOS_VERSION || '17.0',
-        'appium:deviceName': process.env.IOS_DEVICE || 'iPhone 15',
+        'appium:deviceName': process.env.IOS_DEVICE || IOS.DEVICE_NAME,
         'appium:app': appPath,
         'appium:automationName': 'XCUITest',
         'appium:newCommandTimeout': 300000,
@@ -74,7 +101,7 @@ export function getIosCapabilities(): PlatformCapabilities {
 /**
  * Get BrowserStack capabilities (for cloud testing)
  */
-export function getBrowserStackCapabilities(platform: 'android' | 'ios'): any {
+export function getBrowserStackCapabilities(platform: 'android' | 'ios'): PlatformCapabilities {
     const commonCaps = {
         'bstack:options': {
             userName: process.env.BROWSERSTACK_USERNAME,
@@ -137,12 +164,4 @@ export function getAppiumPort(): number {
     return parseInt(process.env.APPIUM_PORT || '4723', 10);
 }
 
-/**
- * Get Appium server URL
- */
-export function getAppiumUrl(): string {
-    const host = process.env.APPIUM_HOST || 'localhost';
-    const port = getAppiumPort();
-    return `http://${host}:${port}`;
-}
 
