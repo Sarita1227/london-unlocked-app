@@ -7,6 +7,11 @@ on:
       - main
       - develop
 
+permissions:
+  contents: read
+  pull-requests: write
+  issues: write
+
 jobs:
   pr-validation:
     name: PR Validation
@@ -99,79 +104,79 @@ jobs:
             echo "Consider splitting into smaller PRs for easier review" >> $GITHUB_STEP_SUMMARY
           fi
 
-      - name: 🧪 Check test coverage
+      - name: Check test coverage
         run: |
           # Check if test files were added/modified
           TEST_FILES=$(git diff --name-only ${{ github.event.pull_request.base.sha }} ${{ github.event.pull_request.head.sha }} | grep -E "\.test\.(ts|tsx|js|jsx)$" || echo "")
           SRC_FILES=$(git diff --name-only ${{ github.event.pull_request.base.sha }} ${{ github.event.pull_request.head.sha }} | grep -E "src/.*\.(ts|tsx|js|jsx)$" | grep -v ".test." || echo "")
           
           if [ -n "$SRC_FILES" ] && [ -z "$TEST_FILES" ]; then
-            echo "⚠️  Source files changed but no test files added/modified" >> $GITHUB_STEP_SUMMARY
+            echo "WARNING: Source files changed but no test files added/modified" >> $GITHUB_STEP_SUMMARY
             echo "Consider adding tests for new/changed functionality" >> $GITHUB_STEP_SUMMARY
           fi
 
-      - name: 🔍 Check for TODO/FIXME
+      - name: Check for TODO/FIXME
         run: |
           TODOS=$(git diff ${{ github.event.pull_request.base.sha }} ${{ github.event.pull_request.head.sha }} | grep -E "^\+.*TODO|^\+.*FIXME" || echo "")
           
           if [ -n "$TODOS" ]; then
-            echo "⚠️  New TODO/FIXME comments found:" >> $GITHUB_STEP_SUMMARY
+            echo "WARNING: New TODO/FIXME comments found:" >> $GITHUB_STEP_SUMMARY
             echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
             echo "$TODOS" >> $GITHUB_STEP_SUMMARY
             echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
           fi
 
-      - name: 🔍 Check for console.log
+      - name: Check for console.log
         run: |
           CONSOLE_LOGS=$(git diff ${{ github.event.pull_request.base.sha }} ${{ github.event.pull_request.head.sha }} | grep -E "^\+.*console\.(log|debug|info|warn|error)" | grep -v "// " || echo "")
           
           if [ -n "$CONSOLE_LOGS" ]; then
-            echo "⚠️  New console.log statements found:" >> $GITHUB_STEP_SUMMARY
+            echo "WARNING: New console.log statements found:" >> $GITHUB_STEP_SUMMARY
             echo "Consider using proper logging library instead" >> $GITHUB_STEP_SUMMARY
           fi
 
   required-checks:
-    name: ✅ Required Checks
+    name: Required Checks
     runs-on: ubuntu-latest
     needs: pr-validation
 
     steps:
-      - name: 📥 Checkout code
+      - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: 📦 Setup Node.js
+      - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '18'
 
-      - name: 📦 Install test dependencies
+      - name: Install test dependencies
         working-directory: london-unlocked-tests
-        run: npm ci
+        run: npm install
 
-      - name: 🔍 ESLint
+      - name: ESLint
         working-directory: london-unlocked-tests
         run: npm run lint
         continue-on-error: false
 
-      - name: 🔍 TypeScript
+      - name: TypeScript
         working-directory: london-unlocked-tests
         run: npx tsc --noEmit
         continue-on-error: false
 
-      - name: ✅ All checks passed
-        run: echo "✅ All required checks passed"
+      - name: All checks passed
+        run: echo "All required checks passed"
 
   auto-label:
-    name: 🏷️ Auto Label
+    name: Auto Label
     runs-on: ubuntu-latest
 
     steps:
-      - name: 📥 Checkout code
+      - name: Checkout code
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: 🏷️ Add labels based on files changed
+      - name: Add labels based on files changed
         uses: actions/github-script@v7
         with:
           script: |
@@ -227,18 +232,18 @@ jobs:
             }
 
   comment-summary:
-    name: 💬 Comment Summary
+    name: Comment Summary
     runs-on: ubuntu-latest
     needs: [pr-validation, required-checks]
     if: always()
 
     steps:
-      - name: 📥 Checkout code
+      - name: Checkout code
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: 💬 Add PR comment
+      - name: Add PR comment
         uses: actions/github-script@v7
         with:
           script: |
@@ -250,7 +255,7 @@ jobs:
             
             const botComment = comments.find(comment => 
               comment.user.type === 'Bot' && 
-              comment.body.includes('🤖 PR Validation Summary')
+              comment.body.includes('PR Validation Summary')
             );
             
             const filesChanged = await github.rest.pulls.listFiles({
@@ -266,27 +271,29 @@ jobs:
             const checksStatus = '${{ needs.required-checks.result }}';
             
             const statusIcon = (status) => {
-              if (status === 'success') return '✅';
-              if (status === 'failure') return '❌';
-              return '⚠️';
+              if (status === 'success') return 'PASS';
+              if (status === 'failure') return 'FAIL';
+              return 'WARN';
             };
             
-            const commentBody = `## 🤖 PR Validation Summary
-
-**Status:** ${statusIcon(validationStatus)} Validation: ${validationStatus} | ${statusIcon(checksStatus)} Required Checks: ${checksStatus}
-
-### 📊 Changes
-- **Files Changed:** ${totalFiles}
-- **Total Changes:** ${totalChanges} lines
-
-### ✅ Checks
-- ${statusIcon(validationStatus)} PR Title Format
-- ${statusIcon(validationStatus)} PR Description
-- ${statusIcon(checksStatus)} ESLint
-- ${statusIcon(checksStatus)} TypeScript Compilation
-
----
-*This comment is automatically updated on each commit*`;
+            const commentBody = [
+              '## PR Validation Summary',
+              '',
+              '**Validation:** ' + statusIcon(validationStatus) + ' | **Required Checks:** ' + statusIcon(checksStatus),
+              '',
+              '### Changes',
+              '- Files Changed: ' + totalFiles,
+              '- Total Changes: ' + totalChanges + ' lines',
+              '',
+              '### Checks',
+              '- PR Title Format: ' + statusIcon(validationStatus),
+              '- PR Description: ' + statusIcon(validationStatus),
+              '- ESLint: ' + statusIcon(checksStatus),
+              '- TypeScript: ' + statusIcon(checksStatus),
+              '',
+              '---',
+              '*Auto-updated on each commit*'
+            ].join('\n');
             
             if (botComment) {
               await github.rest.issues.updateComment({
