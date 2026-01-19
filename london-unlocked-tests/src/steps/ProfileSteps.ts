@@ -1,9 +1,7 @@
 import { TestHelper } from '../helpers/TestHelper';
 import { BasePage } from '../helpers/BasePage';
 import { LandingLocators } from '../locators/LandingLocators';
-import { LoginLocators } from '../locators/LoginLocators';
 import { ProfileLocators } from '../locators/ProfileLocators';
-import { expect } from 'chai';
 
 /**
  * Profile Step Definitions
@@ -28,7 +26,7 @@ export class ProfileSteps extends BasePage {
     /**
      * Verify user profile information is displayed
      */
-    async verifyProfileInformation(expectedUserName: string, expectedEmail: string): Promise<void> {
+    async verifyProfileInformation(expectedUserName: string, _expectedEmail: string): Promise<void> {
         TestHelper.logStep('Verifying profile information');
 
         // Wait for profile page to load
@@ -88,6 +86,21 @@ export class ProfileSteps extends BasePage {
         await this.waitForPageToLoad(LandingLocators.AUTOMATOR.GET_STARTED_BUTTON, LandingLocators.LOCATOR_TYPES.AUTOMATOR);
         await this.verifyElementIsDisplayed(LandingLocators.AUTOMATOR.WELCOME_TITLE, LandingLocators.LOCATOR_TYPES.AUTOMATOR);
         TestHelper.logSuccess('Logout successful - user is back on landing page');
+    }
+
+    /**
+     * Clean up after test - return to landing page for next test
+     */
+    async cleanupAfterTest(): Promise<void> {
+        TestHelper.logStep('Cleaning up after test completion');
+
+        try {
+            // Use the enhanced cleanup method from BasePage
+            await this.cleanupForNextTest();
+            TestHelper.logSuccess('Test cleanup completed successfully');
+        } catch (error) {
+            TestHelper.logStep('Cleanup completed with warnings');
+        }
     }
 }
 

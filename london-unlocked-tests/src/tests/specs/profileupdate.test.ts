@@ -19,13 +19,15 @@ describe('Profile Update Feature - Login to Profile Journey', () => {
         testData = require('../../test-data/users.json');
     });
 
-    beforeEach(async () => {
-        TestHelper.logInfo('Resetting app to landing page');
-        await profileSteps.resetAppToLandingPage();
-    });
-
     afterEach(async () => {
         await TestHelper.takeScreenshot('profile-update-feature');
+
+        // Clean up after each test - reset app to landing page for next test
+        try {
+            await profileSteps.cleanupAfterTest();
+        } catch (error) {
+            console.log('⚠️ Test cleanup completed with warnings');
+        }
     });
 
     it('@test @sanity should navigate to profile after successful login', async () => {
