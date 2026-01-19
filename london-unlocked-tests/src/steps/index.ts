@@ -6,4 +6,5 @@
 
 export { GuestJourneySteps } from './GuestJourneySteps';
 export { LoginInSteps } from './LoginInSteps';
+export { ProfileSteps } from './ProfileSteps';
 
