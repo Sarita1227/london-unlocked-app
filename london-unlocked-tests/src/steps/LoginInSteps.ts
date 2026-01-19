@@ -18,6 +18,7 @@ export class LoginInSteps extends BasePage {
 
     async userClickOnGetStartedButton(): Promise<void> {
         TestHelper.logStep('User clicks on Get Started button');
+        await this.waitForPageToLoad(LandingLocators.AUTOMATOR.GET_STARTED_BUTTON, LandingLocators.LOCATOR_TYPES.AUTOMATOR);
         await this.clickOnElement(LandingLocators.AUTOMATOR.GET_STARTED_BUTTON, LandingLocators.LOCATOR_TYPES.AUTOMATOR);
         await this.waitForPageToLoad(LoginLocators.AUTOMATOR.LOGIN_IN_TITLE, LandingLocators.LOCATOR_TYPES.AUTOMATOR);
         TestHelper.logSuccess('Login Page is loaded');

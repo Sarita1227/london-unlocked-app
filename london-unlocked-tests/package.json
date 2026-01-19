@@ -4,6 +4,7 @@
   "description": "Test Automation Framework for London Unlocked - React Native Mobile App",
   "main": "index.js",
   "scripts": {
+    "scaffold": "ts-node scripts/cly.ts scaffold",
     "test": "USE_EXPO_GO=false wdio run ./wdio.conf.ts",
     "test:all": "USE_EXPO_GO=false wdio run ./wdio.conf.ts -- --mochaOpts.grep '@test'",
     "test:android": "PLATFORM=android USE_EXPO_GO=false wdio run ./wdio.conf.ts",
